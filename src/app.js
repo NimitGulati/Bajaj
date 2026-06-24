@@ -2,6 +2,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const bfhlRoutes = require('./routes/bfhlRoutes');
 const { errorHandler } = require('./middleware/errorHandler');
 const { bfhlLimiter } = require('./middleware/rateLimiter');
@@ -20,12 +21,16 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Routes ─────────────────────────────────────────────────────────────────────
+// ── API Routes ─────────────────────────────────────────────────────────────────
 app.use('/bfhl', bfhlLimiter, bfhlRoutes);
 
-// 404 catch-all
-app.use((req, res) => {
-  res.status(404).json({ is_success: false, message: 'Route not found.' });
+// ── Serve React frontend (production build) ────────────────────────────────────
+const distPath = path.join(__dirname, '..', 'frontend', 'dist');
+app.use(express.static(distPath));
+
+// All non-API routes → React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 // ── Global error handler (must be last) ────────────────────────────────────────
